@@ -11,11 +11,11 @@ class LoginSecurityCodeNotification extends Notification
 {
 //    use Queueable;
 
-    protected string $login_code;
+    protected string $pin;
 
-    public function __construct($login_code)
+    public function __construct($pin)
     {
-        $this->login_code = $login_code;
+        $this->pin = $pin;
     }
 
     public function via($notifiable)
@@ -26,8 +26,9 @@ class LoginSecurityCodeNotification extends Notification
     public function toMail($notifiable)
     {
         return (new MailMessage)
-                    ->line('The introduction to the notification.')
-                    ->action('Login', route('verify_token', $this->login_code))
+                    ->line('Here is your login pin to Lunch Scheduler.')
+                    ->line($this->pin)
+//                    ->action('Login', route('verify_token', $this->login_code))
                     ->line('Thank you for using our application!');
     }
 

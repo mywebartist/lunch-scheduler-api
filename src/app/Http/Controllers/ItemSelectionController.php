@@ -5,17 +5,47 @@ namespace App\Http\Controllers;
 use App\Models\ItemSelection;
 use App\Http\Requests\StoreItemSelectionRequest;
 use App\Http\Requests\UpdateItemSelectionRequest;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Validator;
 
 class ItemSelectionController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
+
+    public function index(Request $_request)
     {
-        return ItemSelection::simplePaginate(5);
+
+        $validator = Validator::make($_request->all(), [
+            'organization_id' => 'required|exists:organizations,id',
+        ]);
+
+        if ($validator->fails()) {
+            return $validator->messages();
+        }
+
+        // get user
+        $email = Crypt::decrypt($_request->header('x-apikey'));
+        $user = User::whereEmail($email)->firstOrFail();
+
+
+        // validate user organization
+        $no_access = User::validateUserOrganization((int)$user->id, ((int)$_request->input('organization_id')));
+        if ($no_access) {
+            return $no_access;
+        }
+
+
+        $items_selected =  ItemSelection::simplePaginate(5) ;
+        $items = array_merge(
+            ['status_code' => 1,
+                'message' => 'items selected'
+            ],
+            $items_selected->toArray()
+            );
+        return $items;
+
+
     }
 
     /**

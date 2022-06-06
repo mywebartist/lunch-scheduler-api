@@ -3,10 +3,10 @@
 namespace App\Policies;
 
 use App\Models\User;
-use App\Models\UserOrganization;
+use App\Models\OrganizationUser;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
-class UserOrganizationPolicy
+class OrganizationUserPolicy
 {
     use HandlesAuthorization;
 
@@ -25,10 +25,10 @@ class UserOrganizationPolicy
      * Determine whether the user can view the model.
      *
      * @param  \App\Models\User  $user
-     * @param  \App\Models\UserOrganization  $userOrganization
+     * @param  \App\Models\OrganizationUser  $userOrganization
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function view(User $user, UserOrganization $userOrganization)
+    public function view(User $user, OrganizationUser $userOrganization)
     {
         //
     }
@@ -48,10 +48,10 @@ class UserOrganizationPolicy
      * Determine whether the user can update the model.
      *
      * @param  \App\Models\User  $user
-     * @param  \App\Models\UserOrganization  $userOrganization
+     * @param  \App\Models\OrganizationUser  $userOrganization
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function update(User $user, UserOrganization $userOrganization)
+    public function update(User $user, OrganizationUser $userOrganization)
     {
         //
     }
@@ -60,10 +60,10 @@ class UserOrganizationPolicy
      * Determine whether the user can delete the model.
      *
      * @param  \App\Models\User  $user
-     * @param  \App\Models\UserOrganization  $userOrganization
+     * @param  \App\Models\OrganizationUser  $userOrganization
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function delete(User $user, UserOrganization $userOrganization)
+    public function delete(User $user, OrganizationUser $userOrganization)
     {
         //
     }
@@ -72,10 +72,10 @@ class UserOrganizationPolicy
      * Determine whether the user can restore the model.
      *
      * @param  \App\Models\User  $user
-     * @param  \App\Models\UserOrganization  $userOrganization
+     * @param  \App\Models\OrganizationUser  $userOrganization
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function restore(User $user, UserOrganization $userOrganization)
+    public function restore(User $user, OrganizationUser $userOrganization)
     {
         //
     }
@@ -84,10 +84,10 @@ class UserOrganizationPolicy
      * Determine whether the user can permanently delete the model.
      *
      * @param  \App\Models\User  $user
-     * @param  \App\Models\UserOrganization  $userOrganization
+     * @param  \App\Models\OrganizationUser  $userOrganization
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function forceDelete(User $user, UserOrganization $userOrganization)
+    public function forceDelete(User $user, OrganizationUser $userOrganization)
     {
         //
     }

@@ -28,7 +28,7 @@ class VerifyEmailNotification extends Notification
     {
         return (new MailMessage)
                     ->line('The introduction to the notification.')
-                    ->action('Notification Action', route('verify_token', $this->login_code))
+//                    ->action('Notification Action', route('verify_token', $this->login_code))
                     ->line('Thank you for using our application!');
 
 //        return (new MailMessage)->view('welcome');

@@ -13,11 +13,11 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('user_organizations', function (Blueprint $table) {
+        Schema::create('login_pins', function (Blueprint $table) {
             $table->id();
-            $table->unsignedInteger('organization_id');
             $table->unsignedInteger('user_id');
-            $table->enum('role', ['org_admin', 'staff', 'chef'])->default('staff');
+            $table->string('pin');
+            $table->string('token');
             $table->timestamps();
         });
     }
@@ -29,6 +29,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('user_organizations');
+        Schema::dropIfExists('login_pins');
     }
 };

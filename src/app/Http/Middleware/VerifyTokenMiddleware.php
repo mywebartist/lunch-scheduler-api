@@ -22,7 +22,7 @@ class VerifyTokenMiddleware
 //                }
             }catch (\Exception $e){
                 $response = [
-                    'status_code' => '0',
+                    'status_code' => 0,
                     'message' => ' login key is invalid'
                 ];
                 return response()->json($response, 413);
@@ -30,7 +30,7 @@ class VerifyTokenMiddleware
 
         }else{
             $response = [
-                'status_code' => '0',
+                'status_code' => 0,
                 'message' => 'login key is required'
             ];
             return response()->json($response, 413);

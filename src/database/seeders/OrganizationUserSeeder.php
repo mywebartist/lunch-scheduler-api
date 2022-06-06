@@ -2,12 +2,12 @@
 
 namespace Database\Seeders;
 
-use App\Models\UserOrganization;
+use App\Models\OrganizationUser;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Seeder;
 
-class UserOrganizationSeeder extends Seeder
+class OrganizationUserSeeder extends Seeder
 {
     /**
      * Run the database seeds.
@@ -17,13 +17,13 @@ class UserOrganizationSeeder extends Seeder
     public function run()
     {
 
-        $org = new UserOrganization();
+        $org = new OrganizationUser();
         $org->organization_id = 1;
         $org->user_id = 1;
 //        $org->role = 'chef';
         $org->save();
 
-        UserOrganization::factory()
+        OrganizationUser::factory()
             ->count(10)
             ->create();
 

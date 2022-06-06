@@ -41,19 +41,19 @@ class User extends Model
     protected $hidden = ['email'];
 
 
-
-    public static function validateStaff($_email, Item $_item, $_item_id){
-        $user = User::whereEmail($_email )->firstOrFail();
-//        $user_orgs = UserOrganization::all()->reject(function ($user1) use ($user) {
+    public static function validateStaff($_email, Item $_item, $_item_id)
+    {
+        $user = User::whereEmail($_email)->firstOrFail();
+//        $user_orgs = OrganizationUser::all()->reject(function ($user1) use ($user) {
 //            return $user1->user_id != $user->id;
 //        });
-        $user_orgs = UserOrganization::all()->where('user_id', $user->id);
+        $user_orgs = OrganizationUser::all()->where('user_id', $user->id);
 //        print_r( $user_orgs->count() ) ;
 //        dd();
         $user_in_org = false;
-        foreach (   $user_orgs  as $user_org) {
+        foreach ($user_orgs as $user_org) {
 //            echo  $_item->organization_id . ', ' ;
-            if($user_org->organization_id == $_item->organization_id){
+            if ($user_org->organization_id == $_item->organization_id) {
                 $user_in_org = true;
 //                echo $_item_id;
             }
@@ -79,23 +79,24 @@ class User extends Model
     }
 
 
-    public static function validateItemOrganization( int $_item_id, int $_organization_id){
+    public static function validateItemOrganization(int $_item_id, int $_organization_id)
+    {
         $item = Item::whereId($_item_id)->firstOrFail();
         $org = Organization::whereId($_organization_id)->firstOrFail();
 
         dd($item);
 
-        $user = User::whereEmail($_email )->firstOrFail();
-//        $user_orgs = UserOrganization::all()->reject(function ($user1) use ($user) {
+        $user = User::whereEmail($_email)->firstOrFail();
+//        $user_orgs = OrganizationUser::all()->reject(function ($user1) use ($user) {
 //            return $user1->user_id != $user->id;
 //        });
-        $user_orgs = UserOrganization::all()->where('user_id', $user->id);
+        $user_orgs = OrganizationUser::all()->where('user_id', $user->id);
 //        print_r( $user_orgs->count() ) ;
 //        dd();
         $user_in_org = false;
-        foreach (   $user_orgs  as $user_org) {
+        foreach ($user_orgs as $user_org) {
 //            echo  $_item->organization_id . ', ' ;
-            if($user_org->organization_id == $_item->organization_id){
+            if ($user_org->organization_id == $_item->organization_id) {
                 $user_in_org = true;
 //                echo $_item_id;
             }
@@ -120,18 +121,66 @@ class User extends Model
 
     }
 
-    public static function validateUserOrganization( int $_user_id, int $_organization_id){
+    public static function validateUserOrganizationRole(int $_user_id, int $_org_id, array $_roles)
+    {
+//        $user = User::whereEmail($email )->firstOrFail();
+
+        // validate user organization
+        $no_access = User::validateUserOrganization($_user_id, $_org_id);
+        if ($no_access) {
+            return $no_access;
+        }
+
+        $user_org = OrganizationUser::whereUserId($_user_id)->whereOrganizationId($_org_id)->first();
+
+//            dd($user_org);
+// check user is part of that org
+//        if (!$user_org) {
+//            return [
+//                'status_code' => 0,
+//                'message' => 'you dont have the role "'.$_role.'" for this lol'
+//            ];
+//        }
+
+        foreach ($_roles as $role) {
+//            echo  $_item->organization_id . ', ' ;
+            if ($user_org->role == $role) {
+                $user_in_org = true;
+//                echo $_item_id;
+                return false;
+            }
+//            echo $user_org->organization_id;
+        }
+
+
+        return [
+            'status_code' => 0,
+            'message' => 'you dont have the role ' . $role . ' for this lol'
+        ];
+
+        // check user is chef
+//        if ($user_org->role !== 'chef' ) {
+//            return [
+//                'status_code' => 0,
+//                'message' => 'you are not a chef in this organization lol'
+//            ];
+//        }
+
+    }
+
+    public static function validateUserOrganization(int $_user_id, int $_organization_id)
+    {
 //        $user = User::whereEmail($_email )->firstOrFail();
-//        $user_orgs = UserOrganization::all()->reject(function ($user1) use ($user) {
+//        $user_orgs = OrganizationUser::all()->reject(function ($user1) use ($user) {
 //            return $user1->user_id != $user->id;
 //        });
-        $user_orgs = UserOrganization::all()->where('user_id', $_user_id);
+        $user_orgs = OrganizationUser::all()->where('user_id', $_user_id);
 //        print_r( $user_orgs->count() ) ;
 //        dd();
         $user_in_org = false;
-        foreach (   $user_orgs  as $user_org) {
+        foreach ($user_orgs as $user_org) {
 //            echo  $_item->organization_id . ', ' ;
-            if($user_org->organization_id == $_organization_id){
+            if ($user_org->organization_id == $_organization_id) {
                 $user_in_org = true;
 //                echo $_item_id;
             }
@@ -156,75 +205,28 @@ class User extends Model
 
     }
 
+    public static function validateChef($email, $organization_id)
+    {
+        $user = User::whereEmail($email)->firstOrFail();
+        $user_org = OrganizationUser::where('user_id', $user->id,)->where('organization_id', $organization_id)->first();
 
-
-    public static function validateUserOrganizationRole( int $_user_id, int $_org_id,  array $_roles){
-//        $user = User::whereEmail($email )->firstOrFail();
-
-        // validate user organization
-        $no_access = User::validateUserOrganization( $_user_id,  $_org_id );
-        if ($no_access) {
-            return $no_access;
-        }
-
-        $user_org = UserOrganization::whereUserId( $_user_id)->whereOrganizationId($_org_id) ->first();
-
-//            dd($user_org);
 // check user is part of that org
-//        if (!$user_org) {
-//            return [
-//                'status_code' => 0,
-//                'message' => 'you dont have the role "'.$_role.'" for this lol'
-//            ];
-//        }
-
-        foreach (   $_roles  as $role) {
-//            echo  $_item->organization_id . ', ' ;
-            if($user_org->role == $role){
-                $user_in_org = true;
-//                echo $_item_id;
-                return [
-                    'status_code' => 0,
-                    'message' => 'you dont have the role "'.$_role.'" for this lol'
-                ];
-            }
-//            echo $user_org->organization_id;
+        if (!$user_org) {
+            return [
+                'status_code' => 0,
+                'message' => 'you are not part of this organization lol'
+            ];
         }
 
         // check user is chef
-//        if ($user_org->role !== 'chef' ) {
-//            return [
-//                'status_code' => 0,
-//                'message' => 'you are not a chef in this organization lol'
-//            ];
-//        }
+        if ($user_org->role !== 'chef') {
+            return [
+                'status_code' => 0,
+                'message' => 'you are not a chef in this organization lol'
+            ];
+        }
 
     }
-
-
-   public static function validateChef($email, $organization_id){
-       $user = User::whereEmail($email )->firstOrFail();
-       $user_org = UserOrganization::where('user_id', $user->id,)->where('organization_id', $organization_id)->first();
-
-// check user is part of that org
-       if (!$user_org) {
-           return [
-               'status_code' => 0,
-               'message' => 'you are not part of this organization lol'
-           ];
-       }
-
-       // check user is chef
-       if ($user_org->role !== 'chef' ) {
-           return [
-               'status_code' => 0,
-               'message' => 'you are not a chef in this organization lol'
-           ];
-       }
-
-}
-
-
 
 
 }

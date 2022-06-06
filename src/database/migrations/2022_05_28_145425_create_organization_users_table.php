@@ -13,13 +13,11 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('organizations', function (Blueprint $table) {
+        Schema::create('organization_users', function (Blueprint $table) {
             $table->id();
-//            $table->unsignedInteger('logo_media_id');
-            $table->string('name');
-            $table->text('description')->nullable();
-            $table->string('website')->nullable();
-
+            $table->unsignedInteger('organization_id');
+            $table->unsignedInteger('user_id');
+            $table->enum('role', ['org_admin', 'staff', 'chef'])->default('staff');
             $table->timestamps();
         });
     }
@@ -31,6 +29,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('organizations');
+        Schema::dropIfExists('user_organizations');
     }
 };
