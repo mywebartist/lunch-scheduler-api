@@ -23,7 +23,7 @@ class VerifyTokenMiddleware
             }catch (\Exception $e){
                 $response = [
                     'status_code' => 0,
-                    'message' => ' login key is invalid'
+                    'message' => ' login token is invalid. x-apikey as header'
                 ];
                 return response()->json($response, 413);
             };
@@ -31,7 +31,7 @@ class VerifyTokenMiddleware
         }else{
             $response = [
                 'status_code' => 0,
-                'message' => 'login key is required'
+                'message' => 'login token missing. x-apikey as header'
             ];
             return response()->json($response, 413);
         }

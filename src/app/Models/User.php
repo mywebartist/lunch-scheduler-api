@@ -131,7 +131,7 @@ class User extends Model
             return $no_access;
         }
 
-        $user_org = OrganizationUser::whereUserId($_user_id)->whereOrganizationId($_org_id)->first();
+        $org_user = OrganizationUser::whereUserId($_user_id)->whereOrganizationId($_org_id)->first();
 
 //            dd($user_org);
 // check user is part of that org
@@ -142,20 +142,25 @@ class User extends Model
 //            ];
 //        }
 
+//        dd($org_user->roles);
+
         foreach ($_roles as $role) {
 //            echo  $_item->organization_id . ', ' ;
-            if ($user_org->role == $role) {
-                $user_in_org = true;
+            foreach (json_decode($org_user->roles) as $user_role) {
+                if ($user_role == $role) {
+                    $user_in_org = true;
 //                echo $_item_id;
-                return false;
+                    return false;
+                }
             }
+
 //            echo $user_org->organization_id;
         }
 
 
         return [
             'status_code' => 0,
-            'message' => 'you dont have the role ' . $role . ' for this lol'
+            'message' => 'you dont have the role [' . implode(', ', $_roles) . '] for this organization lmao'
         ];
 
         // check user is chef
@@ -191,7 +196,7 @@ class User extends Model
         if (!$user_in_org) {
             return [
                 'status_code' => 0,
-                'message' => 'you are not part of this organization lol'
+                'message' => 'this user is not part of this organization lmao'
             ];
         }
 

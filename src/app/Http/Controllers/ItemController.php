@@ -29,12 +29,17 @@ class ItemController extends Controller
 
         // get user
         $email = Crypt::decrypt($_request->header('x-apikey'));
-        $user = User::whereEmail($email)->firstOrFail();
+        $user = User::whereEmail($email)->first();
+        if(!$user){
+            return   ['status_code' => 0,
+                'message' => 'login expired'
+            ];
+        }
 
 //        dd(( (int) $_request->input('organization_id' ) ) );
 
         // validate user organization
-        $no_access = User::validateUserOrganization((int)$user->id, ((int)$_request->input('organization_id')));
+        $no_access = User::validateUserOrganizationRole((int)$user->id, ((int)$_request->input('organization_id')), [ 'staff']);
         if ($no_access) {
             return $no_access;
         }
@@ -71,7 +76,12 @@ class ItemController extends Controller
 
         // get user
         $email = Crypt::decrypt($_request->header('x-apikey'));
-        $user = User::whereEmail($email)->firstOrFail();
+        $user = User::whereEmail($email)->first();
+        if(!$user){
+            return   ['status_code' => 0,
+                'message' => 'login expired'
+            ];
+        }
 
         // validate chef rights
 //        $no_access = User::validateChef($email, $_request->organization_id);
@@ -80,7 +90,7 @@ class ItemController extends Controller
 //        }
 
         // validate chef permission in organization
-        $no_access = User::validateUserOrganizationRole((int)$user->id, ((int)$_request->input('organization_id')), ['chef']);
+        $no_access = User::validateUserOrganizationRole((int)$user->id, ((int)$_request->input('organization_id')), [ 'org_admin','chef']);
         if ($no_access) {
             return $no_access;
         }
@@ -138,9 +148,13 @@ class ItemController extends Controller
 
         // get user
         $email = Crypt::decrypt($_request->header('x-apikey'));
-//        dd($email);
-        $user = User::whereEmail($email)->firstOrFail();
-//        dd($user);
+        $user = User::whereEmail($email)->first();
+        if(!$user){
+            return   ['status_code' => 0,
+                'message' => 'login expired'
+            ];
+        }
+
         // get item
         $item = Item::whereId($_item_id)->firstOrFail();
 //        dd($item);
@@ -148,7 +162,7 @@ class ItemController extends Controller
 //        $user_org = OrganizationUser::where('user_id', $user->id,)->where('organization_id', $_request->input('organization_id'))->firstOrFail();
 //        dd($user_org);
         // validate user organization
-        $no_access = User::validateUserOrganization((int)$user->id, ((int)$item->organization_id));
+        $no_access = User::validateUserOrganizationRole((int)$user->id, ((int)$item->organization_id) , [ 'staff']);
         if ($no_access) {
             return $no_access;
         }
@@ -199,7 +213,12 @@ class ItemController extends Controller
         // get user
 //        $email = Crypt::decrypt($_request->header('x-apikey'));
         $email = Crypt::decrypt($_request->header('x-apikey'));
-        $user = User::whereEmail($email)->firstOrFail();
+        $user = User::whereEmail($email)->first();
+        if(!$user){
+            return   ['status_code' => 0,
+                'message' => 'login expired'
+            ];
+        }
 
 //        dd($_item_id);
 
@@ -284,7 +303,12 @@ class ItemController extends Controller
 
         // get user org
         $email = Crypt::decrypt($_request->header('x-apikey'));
-        $user = User::whereEmail($email)->firstOrFail();
+        $user = User::whereEmail($email)->first();
+        if(!$user){
+            return   ['status_code' => 0,
+                'message' => 'login expired'
+            ];
+        }
 
         // validate chef permission in organization
         $no_access = User::validateUserOrganizationRole((int)$user->id, ((int)$item->organization_id), ['chef']);

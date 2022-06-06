@@ -16,15 +16,17 @@ class UserSeeder extends Seeder
     public function run()
     {
 
+        $user_admin = User::whereEmail(env('ADMIN_EMAIL'))->first();
+        if(!$user_admin){
+            // add fixed user
+            $user_admin = new User();
+            $user_admin->name = 'k';
+            $user_admin->email = env('ADMIN_EMAIL');
+            $user_admin->role = 'admin';
+            $user_admin->status = 1;
+            $user_admin->save();
+        }
 
-        // add fixed user
-        $user = new User();
-
-        $user->name = 'k';
-        $user->email = 'k@hotmail.com';
-        $user->role = 'admin';
-        $user->status = 1;
-        $user->save();
 
         User::factory()
             ->count(9)

@@ -33,7 +33,8 @@ Route::put('profile',[\App\Http\Controllers\AuthController::class,'updateProfile
 Route::resource('items', \App\Http\Controllers\ItemController::class)->except(['create', 'edit'])->middleware(['logged_in']);
 
 // organization
-Route::get('org/users', [\App\Http\Controllers\OrganizationUserController::class, 'org_users'])->middleware('logged_in');
+Route::get('org/users', [\App\Http\Controllers\OrganizationUserController::class, 'get_org_users'])->middleware('logged_in');
+Route::put('org/user/roles', [\App\Http\Controllers\OrganizationUserController::class, 'org_user_add_remove_role'])->middleware('logged_in');
 Route::resource('org', \App\Http\Controllers\OrganizationController::class)->except([ 'index', 'create', 'edit', 'destroy'])->middleware(['logged_in']);
 
 

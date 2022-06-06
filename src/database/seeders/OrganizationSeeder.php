@@ -16,7 +16,7 @@ class OrganizationSeeder extends Seeder
     {
         $org = new Organization();
         $org->name = 'coa gi';
-        $org->description = 'coa descriptin';
+        $org->description = 'coa description';
         $org->website = 'www.coa.com';
         $org->save();
 

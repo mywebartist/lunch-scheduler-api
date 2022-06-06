@@ -30,7 +30,7 @@ class ItemSelectionController extends Controller
 
 
         // validate user organization
-        $no_access = User::validateUserOrganization((int)$user->id, ((int)$_request->input('organization_id')));
+        $no_access = User::validateUserOrganizationRole((int)$user->id, ((int)$_request->input('organization_id')) , [ 'staff']);
         if ($no_access) {
             return $no_access;
         }
