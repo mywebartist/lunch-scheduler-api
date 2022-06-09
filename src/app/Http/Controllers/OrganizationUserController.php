@@ -11,16 +11,64 @@ use Illuminate\Support\Facades\Validator;
 class OrganizationUserController extends Controller
 {
 
-    private $user_allowed_roles = ['staff', 'chef', 'org_admin'];
+    private array $user_allowed_roles = ['staff', 'chef', 'org_admin'];
+
+
+    public function add_org_user(Request $_request)
+    {
+        $validator = Validator::make($_request->all(), [
+            'organization_id' => 'required|exists:organizations,id',
+            'email' => 'required|exists:users,email',
+        ]);
+
+        if ($validator->fails()) {
+            return $validator->messages();
+        }
+
+        // get user
+        $email = Crypt::decrypt($_request->header('x-apikey'));
+        $user = User::whereEmail($email)->first();
+        if (!$user) {
+            return ['status_code' => 0,
+                'message' => 'login expired'
+            ];
+        }
+
+        // validate chef/org_admin permission in organization
+        $no_access = User::validateUserOrganizationRole((int)$user->id, ((int)$_request->input('organization_id')), ['chef', 'org_admin']);
+        if ($no_access) {
+            return $no_access;
+        }
+
+
+        // find user with email
+        $user_target = User::whereEmail($_request->input('email'))->first();
+//        if (!$user_target) {
+//            return ['status_code' => 0,
+//                'message' => 'there is no user with this email: ' .$_request->input('email'). 'what are you doing, in system lmao'
+//            ];
+//        }
+
+        $org_user = new OrganizationUser();
+        $org_user->organization_id = $_request->input('organization_id');
+        $org_user->user_id = $_request->input('user_id');
+        $org_user->roles = json_encode( ["staff"]);
+        $org_user->save();
+        dd();
+
+        $org_user = array_merge(
+            ['status_code' => 1,
+                'message' => 'user added to org: ' . $_request->input('organization_id')
+            ],
+            $org_user->toArray());
+        return $org_user;
+    }
 
     //
     public function get_org_users(Request $_request)
     {
-
         $validator = Validator::make($_request->all(), [
-//            'name' => 'required|max:255',
             'organization_id' => 'required|exists:organizations,id',
-//            'thumbnail_media_id' => 'exists:medias,id'
         ]);
 
         if ($validator->fails()) {
@@ -43,21 +91,13 @@ class OrganizationUserController extends Controller
         }
 
         $org_users = OrganizationUser::all()->where('organization_id', $_request->input('organization_id'));
-//        dd($org_users);
         $org_users_ids = [];
         foreach ($org_users as $org_user) {
             $org_users_ids[] = $org_user->user_id;
         }
 
-
-//        dd($org_users_ids);
         $users = User::findMany($org_users_ids);
 
-//        dd( $_request->input('organization_id'));
-//        dd($users);
-//        return User::whereId( $_request->input('organization_id'))->firstOrFail();
-
-//            return $users;
         $users = array_merge(
             ['status_code' => 1,
                 'message' => 'users from this org'
@@ -71,11 +111,10 @@ class OrganizationUserController extends Controller
     {
 
         $validator = Validator::make($_request->all(), [
-            'user_id' => 'required|exists:users,id',
+            'email' => 'required|exists:users,email',
             'organization_id' => 'required|exists:organizations,id',
             'role' => 'required',
             'add_or_remove' => 'required|in:add,remove',
-//            'thumbnail_media_id' => 'exists:medias,id'
         ]);
 
         if ($validator->fails()) {
@@ -89,6 +128,7 @@ class OrganizationUserController extends Controller
             ];
         }
 
+        // get user
         $email = Crypt::decrypt($_request->header('x-apikey'));
         $user = User::whereEmail($email)->first();
         if (!$user) {
@@ -97,32 +137,36 @@ class OrganizationUserController extends Controller
             ];
         }
 
-        // cant edit yourself
-        if ($user->id == $_request->input('user_id')) {
-            return ['status_code' => 0,
-                'message' => 'you cant edit yourself booi'
-            ];
-        }
-
-        // validate user organization
-        $no_access = User::validateUserOrganization($_request->input('user_id'), $_request->input('organization_id'));
-        if ($no_access) {
-            return $no_access;
-        }
-
-        $org_user = OrganizationUser::whereUser_id($_request->input('user_id'))->whereOrganization_id($_request->input('organization_id'))->first();
-        $org_user_roles = json_decode($org_user->roles);
-
         // validate org_admin permission in organization
         $no_access = User::validateUserOrganizationRole((int)$user->id, ($_request->input('organization_id')), ['org_admin']);
         if ($no_access) {
             return $no_access;
         }
 
-//        dd(   $org_user_roles     );
-//
+        // get target user to change
+        $user_target = User::whereEmail($_request->email)->first();
 
-//        dd( $org_user_roles );
+        // validate target user organization
+        $no_access = User::validateUserOrganization((int)$user_target->id, $_request->input('organization_id'));
+        if ($no_access) {
+            return $no_access;
+        }
+
+        // target org_user
+        $org_user = OrganizationUser::whereUser_id((int)$user_target->id)->whereOrganization_id($_request->input('organization_id'))->first();
+        $org_user_roles = json_decode($org_user->roles);
+
+
+        // org_admin cant remove org_admin role of others
+        if ($_request->input('role') == 'org_admin' && $_request->input('add_or_remove') == 'remove') {
+            if ($user->email !== $user_target->email) {
+                return ['status_code' => 0,
+                    'message' => 'you cant remove org_admin from other account, they can leave themself if they like'
+                ];
+            }
+
+        }
+
         // add role
         if ($_request->input('add_or_remove') == 'add') {
 
@@ -143,9 +187,8 @@ class OrganizationUserController extends Controller
         if ($_request->input('add_or_remove') == 'remove') {
             // add new role
             $org_user_roles = array_diff($org_user_roles, [$_request->input('role')]);
-            // remove duplicate roles
-//            $org_user_roles = array_unique($org_user_roles);
 
+            // remove duplicate roles
             $org_user->roles = json_encode($org_user_roles);
             $org_user->save();
             return [
@@ -168,21 +211,6 @@ class OrganizationUserController extends Controller
             }
         }
         return false;
-    }
-
-    public function org_user_remove_role(Request $_request)
-    {
-
-        $validator = Validator::make($_request->all(), [
-            'user_id' => 'required|exists:users,id',
-            'organization_id' => 'required|exists:organizations,id',
-//            'thumbnail_media_id' => 'exists:medias,id'
-        ]);
-
-        if ($validator->fails()) {
-            return $validator->messages();
-        }
-
     }
 
 }

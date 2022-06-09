@@ -3,8 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Media;
-use App\Http\Requests\StoreMediaRequest;
-use App\Http\Requests\UpdateMediaRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -13,13 +11,12 @@ class MediaController extends Controller
 
     public function index()
     {
-
         return Media::simplePaginate(5);
     }
 
     public function store(Request $request)
     {
-        $validator = Validator::make($request->all(),[
+        $validator = Validator::make($request->all(), [
             'file' => 'required|mimes:png,jpg|max:10000',
             'resource_type' => 'required|in:user,organization,item',
             'resource_id' => 'required',
@@ -36,11 +33,9 @@ class MediaController extends Controller
 
         // save file
         $path = $request->file('file')->store('public/medias');
-//        dd($path);
-        $item->filename = str_replace('public/medias/', '', $path );
+        $item->filename = str_replace('public/medias/', '', $path);
 
         $item->save();
-//        dd($request->file('file'));
 
         return $item;
     }

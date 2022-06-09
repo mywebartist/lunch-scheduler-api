@@ -19,7 +19,14 @@ class ItemSelectionFactory extends Factory
         return [
             'user_id' => $this->faker->numberBetween(1,10),
             'schedule_id' => $this->faker->numberBetween(1,10),
+            'organization_id' => $this->faker->numberBetween(1,10),
             'item_id' => $this->faker->numberBetween(1,10),
+            'items_ids' => json_encode([
+                $this->faker->numberBetween(1,10),
+                $this->faker->numberBetween(1,10),
+                $this->faker->numberBetween(1,10),
+            ]),
+            'scheduled_at' => $this->faker->dateTimeBetween('now','+7 days')
         ];
     }
 }

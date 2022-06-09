@@ -4,14 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Mail\LoginSecurityCodeMail;
 use App\Models\LoginPin;
+use App\Models\OrganizationUser;
 use App\Models\User;
 use App\Notifications\LoginSecurityCodeNotification;
-use App\Notifications\VerifyEmailNotification;
 use Illuminate\Http\Request;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Validator;
 
@@ -42,11 +40,7 @@ class AuthController extends Controller
         }
 
         $pin = generateRandomPin();
-
         $login_pin = new LoginPin();
-
-        // check if user exist with email
-//        $user_count = User::whereEmail( $_request->input('email'))->count();
 
         // create login code
         $token = Crypt::encrypt($_request->input('email'));
@@ -83,19 +77,6 @@ class AuthController extends Controller
             'message' => 'login pin sent to your email'
         ];
 
-        // save login pin
-//        $login_pin->user_id = $user->get('id');
-//        $login_pin->token = ' tok';
-//        $login_pin->pin = 'sdf pin';
-
-        // send verify email
-//        Notification::send($user, new VerifyEmailNotification($login_code));
-
-//        return [
-//            'user' => $user,
-//            'status_code' => 1,
-//            'message' => 'verify link sent to your email'
-//        ];
     }
 
     public function login_pin(Request $_request)
@@ -112,21 +93,43 @@ class AuthController extends Controller
             ];
         }
 
-        //       $s =  \DateTime::now();
-        //        dd();
-        //        $login_pin = LoginPin::wherePin($_request->input('pin'))->first();
         $fromYesterday = date('Y-m-d', strtotime("-1 day"));
 
         $pin = strtoupper($_request->input('pin'));
         $login_pin = LoginPin::whereDate('created_at', '>=', $fromYesterday)->wherePin($pin)->first();
-        // dd($login_pin);
+
+        if (!$login_pin) {
+            return ['status_code' => 0,
+                'message' => 'login pin expired you too slow lmao. login with pin within 1 day'
+            ];
+        }
+
+        // get user
+        $email = Crypt::decrypt($login_pin->token);
+        $user = User::whereEmail($email)->first();
+        if (!$user) {
+            return ['status_code' => 0,
+                'message' => 'login expired'
+            ];
+        }
+
+        // get users organizations
+        $user_organizations = OrganizationUser::all()->where('user_id', $user->id);
+        $user_organizations_ids = [];
+
+        // create user org array
+        foreach ($user_organizations as $user_organization) {
+            $user_organizations_ids[] = $user_organization->organization_id;
+        }
+
         if ($login_pin) {
             $token = $login_pin->token;
-            $login_pin->delete();
+            // $login_pin->delete();
             return [
                 'x-apikey' => $token,
                 'status_code' => 1,
-                'message' => 'access token'
+                'message' => 'access token',
+                'organization_ids' => $user_organizations_ids
             ];
         }
 
@@ -143,7 +146,7 @@ class AuthController extends Controller
         if ($email) {
             $user = User::where('email', $email)->first();
 
-            if(!$user){
+            if (!$user) {
                 return [
                     'status_code' => 0,
                     'message' => 'invalid user'
@@ -159,7 +162,7 @@ class AuthController extends Controller
             return [
                 'user' => $user,
                 'status_code' => 1,
-                'message' => 'login valid'
+                'message' => 'user activated'
             ];
         }
 
@@ -175,12 +178,18 @@ class AuthController extends Controller
         // get user
         $email = Crypt::decrypt($_request->header('x-apikey'));
         $user = User::whereEmail($email)->firstOrFail();
+        if (!$user) {
+            return ['status_code' => 0,
+                'message' => 'login expired'
+            ];
+        }
+
         $user = array_merge(
             ['status_code' => 1,
                 'message' => 'logged in user'
             ],
             $user->toArray()
-            );
+        );
         return $user;
     }
 
@@ -189,6 +198,12 @@ class AuthController extends Controller
         // get user
         $email = Crypt::decrypt($_request->header('x-apikey'));
         $user = User::whereEmail($email)->firstOrFail();
+        if (!$user) {
+            return ['status_code' => 0,
+                'message' => 'login expired'
+            ];
+        }
+
 
         if ($_request->input('name')) {
             $user->name = $_request->input('name');

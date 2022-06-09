@@ -144,6 +144,8 @@ class User extends Model
 
 //        dd($org_user->roles);
 
+
+
         foreach ($_roles as $role) {
 //            echo  $_item->organization_id . ', ' ;
             foreach (json_decode($org_user->roles) as $user_role) {
@@ -196,7 +198,7 @@ class User extends Model
         if (!$user_in_org) {
             return [
                 'status_code' => 0,
-                'message' => 'this user is not part of this organization lmao'
+                'message' => 'this user id: '.$_user_id.' is not part of this organization id: '.$_organization_id.' lmao'
             ];
         }
 

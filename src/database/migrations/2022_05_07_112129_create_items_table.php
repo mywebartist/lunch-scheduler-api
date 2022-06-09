@@ -16,7 +16,6 @@ return new class extends Migration
         Schema::create('items', function (Blueprint $table) {
             $table->id();
             $table->unsignedInteger('organization_id');
-//            $table->unsignedInteger('thumbnail_media_id')->nullable();
             $table->string('name');
             $table->text('description')->nullable();
             $table->timestamps();

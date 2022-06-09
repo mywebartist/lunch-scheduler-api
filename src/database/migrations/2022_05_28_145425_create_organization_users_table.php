@@ -17,7 +17,6 @@ return new class extends Migration
             $table->id();
             $table->unsignedInteger('organization_id');
             $table->unsignedInteger('user_id');
-//            $table->enum('role', ['org_admin', 'staff', 'chef'])->default('staff');
             $table->json('roles')->default( json_encode( ['staff']));
             $table->timestamps();
         });
