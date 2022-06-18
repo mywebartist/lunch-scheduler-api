@@ -13,19 +13,68 @@ use Illuminate\Support\Facades\Validator;
 class OrganizationController extends Controller
 {
 
+    public function index(Request $_request){
+        $validator = Validator::make($_request->all(), [
+//            'name' => 'required|max:255',
+        ]);
+        if ($validator->fails()) {
+            return [
+                'status_code' => 0,
+                'message' => $validator->messages()->first(),
+                'errors' => $validator->messages()
+            ];
+        }
+
+        // get user
+        $email = Crypt::decrypt($_request->header('x-apikey'));
+//        dd('df');
+        $user = User::whereEmail($email)->first();
+        if (!$user) {
+            return ['status_code' => 0,
+                'message' => 'login expired'
+            ];
+        }
+
+        // find org
+        $orgs = Organization::simplePaginate(10);
+//        if (!$orgs) {
+//            return ['status_code' => 0,
+//                'message' => 'org does not exist'
+//            ];
+//        }
+
+        $orgs = array_merge(
+            ['status_code' => 1,
+                'message' => 'all the registered orgs lol'
+            ],
+            $orgs->toArray()
+        );
+        return $orgs;
+
+
+    }
+
     public function store(Request $_request)
     {
         $validator = Validator::make($_request->all(), [
             'name' => 'required|max:255',
         ]);
-
         if ($validator->fails()) {
-            return $validator->messages();
+            return [
+                'status_code' => 0,
+                'message' => $validator->messages()->first(),
+                'errors' => $validator->messages()
+            ];
         }
 
         // get user
         $email = Crypt::decrypt($_request->header('x-apikey'));
-        $user = User::whereEmail($email)->firstOrFail();
+        $user = User::whereEmail($email)->first();
+        if (!$user) {
+            return ['status_code' => 0,
+                'message' => 'login expired'
+            ];
+        }
 
         // create org
         $org = new Organization();
@@ -36,6 +85,7 @@ class OrganizationController extends Controller
         $user_org = new OrganizationUser();
         $user_org->organization_id = $org->id;
         $user_org->user_id = $user->id;
+        $user_org->roles =  json_encode( ["org_admin"]) ;
         $user_org->save();
 
         return ['status_code' => 1,
@@ -50,14 +100,22 @@ class OrganizationController extends Controller
         $validator = Validator::make($_request->all(), [
 
         ]);
-
         if ($validator->fails()) {
-            return $validator->messages();
+            return [
+                'status_code' => 0,
+                'message' => $validator->messages()->first(),
+                'errors' => $validator->messages()
+            ];
         }
 
         // get user
         $email = Crypt::decrypt($_request->header('x-apikey'));
-        $user = User::whereEmail($email)->firstOrFail();
+        $user = User::whereEmail($email)->first();
+        if (!$user) {
+            return ['status_code' => 0,
+                'message' => 'login expired'
+            ];
+        }
 
         // find org
         $org = Organization::whereId(4)->firstOrFail();
@@ -82,8 +140,12 @@ class OrganizationController extends Controller
     {
         // get user
         $email = Crypt::decrypt($_request->header('x-apikey'));
-        $user = User::whereEmail($email)->firstOrFail();
-
+        $user = User::whereEmail($email)->first();
+        if (!$user) {
+            return ['status_code' => 0,
+                'message' => 'login expired'
+            ];
+        }
 
         // find item
         $org = Organization::find($_org_id);

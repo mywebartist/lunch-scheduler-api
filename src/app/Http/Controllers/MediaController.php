@@ -24,8 +24,13 @@ class MediaController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return $validator->messages();
+            return [
+                'status_code' => 0,
+                'message' => $validator->messages()->first(),
+                'errors' => $validator->messages()
+            ];
         }
+
         $item = new Media();
         $item->resource_id = $request->input('resource_id');
         $item->resource_type = $request->input('resource_type');

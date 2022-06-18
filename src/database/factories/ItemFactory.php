@@ -17,7 +17,7 @@ class ItemFactory extends Factory
     public function definition()
     {
         return [
-            'organization_id' => $this->faker->numberBetween(1,9),
+            'organization_id' => $this->faker->numberBetween(1, 9),
 //            'thumbnail_media_id' => $this->faker->numberBetween(0,10),
             'name' => $this->faker->randomElement(['burger', 'pizza', 'salad']),
             'description' => $this->faker->paragraph(),

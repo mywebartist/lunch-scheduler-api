@@ -21,7 +21,11 @@ class ItemController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return $validator->messages();
+            return [
+                'status_code' => 0,
+                'message' => $validator->messages()->first(),
+                'errors' => $validator->messages()
+            ];
         }
 
         // get user
@@ -61,7 +65,11 @@ class ItemController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return $validator->messages();
+            return [
+                'status_code' => 0,
+                'message' => $validator->messages()->first(),
+                'errors' => $validator->messages()
+            ];
         }
 
         // get user
@@ -101,7 +109,11 @@ class ItemController extends Controller
         }
 
         if ($validator->fails()) {
-            return $validator->messages();
+            return [
+                'status_code' => 0,
+                'message' => $validator->messages()->first(),
+                'errors' => $validator->messages()
+            ];
         }
 
         if ($_request->input('thumbnail_media_id')) {
@@ -109,6 +121,12 @@ class ItemController extends Controller
         }
 
         $item->save();
+
+        $item = array_merge(
+            ['status_code' => 1,
+                'message' => 'item added'
+            ],
+            $item->toArray());
         return $item;
     }
 
@@ -125,7 +143,13 @@ class ItemController extends Controller
         }
 
         // get item
-        $item = Item::whereId($_item_id)->firstOrFail();
+        $item = Item::whereId($_item_id)->first();
+        if (!$item) {
+            return     ['status_code' => 0,
+                'message' => 'invalid item id'
+            ];
+        }
+
 
         // validate user organization
         $no_access = User::validateUserOrganizationRole((int)$user->id, ((int)$item->organization_id), ['staff']);
@@ -151,7 +175,11 @@ class ItemController extends Controller
 
 
         if ($validator->fails()) {
-            return $validator->messages();
+            return [
+                'status_code' => 0,
+                'message' => $validator->messages()->first(),
+                'errors' => $validator->messages()
+            ];
         }
 
         // find item
@@ -212,7 +240,11 @@ class ItemController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return $validator->messages();
+            return [
+                'status_code' => 0,
+                'message' => $validator->messages()->first(),
+                'errors' => $validator->messages()
+            ];
         }
 
         // find item

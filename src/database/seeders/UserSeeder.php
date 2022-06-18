@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class UserSeeder extends Seeder
@@ -17,7 +16,7 @@ class UserSeeder extends Seeder
     {
 
         $user_admin = User::whereEmail(env('ADMIN_EMAIL'))->first();
-        if(!$user_admin){
+        if (!$user_admin) {
             // add fixed user
             $user_admin = new User();
             $user_admin->name = 'k';
@@ -27,6 +26,16 @@ class UserSeeder extends Seeder
             $user_admin->save();
         }
 
+        $user_test = User::whereEmail(env('TEST_EMAIL'))->first();
+        if (!$user_test) {
+            // add fixed user
+            $user_test = new User();
+            $user_test->name = 'k';
+            $user_test->email = env('TEST_EMAIL');
+            $user_test->role = 'user';
+            $user_test->status = 1;
+            $user_test->save();
+        }
 
         User::factory()
             ->count(9)

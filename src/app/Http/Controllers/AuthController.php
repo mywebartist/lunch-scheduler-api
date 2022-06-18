@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Mail\LoginSecurityCodeMail;
 use App\Models\LoginPin;
+use App\Models\Organization;
 use App\Models\OrganizationUser;
 use App\Models\User;
 use App\Notifications\LoginSecurityCodeNotification;
@@ -30,6 +31,7 @@ class AuthController extends Controller
             return [
                 'status_code' => 0,
                 'message' => $validator->messages()->first(),
+                'errors' => $validator->messages()
             ];
         }
 
@@ -72,7 +74,6 @@ class AuthController extends Controller
             return response()->json($response, 413);
         }
         return [
-            'user' => $user,
             'status_code' => 1,
             'message' => 'login pin sent to your email'
         ];
@@ -90,6 +91,7 @@ class AuthController extends Controller
             return [
                 'status_code' => 0,
                 'message' => $validator->messages()->first(),
+                'errors' => $validator->messages()
             ];
         }
 
@@ -122,21 +124,22 @@ class AuthController extends Controller
             $user_organizations_ids[] = $user_organization->organization_id;
         }
 
-        if ($login_pin) {
-            $token = $login_pin->token;
-            // $login_pin->delete();
-            return [
-                'x-apikey' => $token,
-                'status_code' => 1,
-                'message' => 'access token',
-                'organization_ids' => $user_organizations_ids
-            ];
-        }
-
+//        if ($login_pin) {
+        $token = $login_pin->token;
+        // $login_pin->delete();
         return [
-            'status_code' => 0,
-            'message' => 'this pin is expired or used lol'
+            'x-apikey' => $token,
+            'status_code' => 1,
+            'message' => 'access token',
+            'user' => $user
+//                'organization_ids' => $user_organizations_ids
         ];
+//        }
+
+//        return [
+//            'status_code' => 0,
+//            'message' => 'this pin is expired or used lol'
+//        ];
     }
 
     public function verifyToken($_token): array
@@ -162,7 +165,7 @@ class AuthController extends Controller
             return [
                 'user' => $user,
                 'status_code' => 1,
-                'message' => 'user activated'
+                'message' => $user->status == 1 ? 'user activate' : 'user not activate',
             ];
         }
 
@@ -177,27 +180,66 @@ class AuthController extends Controller
     {
         // get user
         $email = Crypt::decrypt($_request->header('x-apikey'));
-        $user = User::whereEmail($email)->firstOrFail();
+        $user = User::whereEmail($email)->first();
         if (!$user) {
             return ['status_code' => 0,
                 'message' => 'login expired'
             ];
         }
 
+//        $user_orgs = OrganizationUser::all()->where('user_id', $user->id);
+//        $user_org_ids = [];
+//        foreach ($user_orgs as $user_org) {
+//            $user_org_ids[] = $user_org->organization_id;
+//        }
+        $user_orgs = $this->getUserOrgsByUserId($user->id);
+//        if ($user_orgs->count() == 0) {
+//
+//            return ['status_code' => 0,
+//                'message' => 'you are lonely, no orgs yet :) '
+//            ];
+//        }
+
+
+//        $user_orgs = Organization::findMany($user_org_ids);
+
+
+//        return array_merge(
+//            ['status_code' => 1,
+//                'message' => 'users from this org'
+//            ],
+//            $user_orgs->toArray(),
+//        );
+
         $user = array_merge(
             ['status_code' => 1,
                 'message' => 'logged in user'
             ],
-            $user->toArray()
+            $user->toArray(),
+            [
+                'orgs' =>
+                    $user_orgs->toArray()
+            ]
         );
         return $user;
+    }
+
+    public function getUserOrgsByUserId(int $_user_id)
+    {
+        $user_orgs = OrganizationUser::all()->where('user_id', $_user_id);
+        $user_org_ids = [];
+        foreach ($user_orgs as $user_org) {
+            $user_org_ids[] = $user_org->organization_id;
+        }
+        $user_orgs = Organization::findMany($user_org_ids);
+        return $user_orgs;
     }
 
     public function updateProfile(Request $_request)
     {
         // get user
         $email = Crypt::decrypt($_request->header('x-apikey'));
-        $user = User::whereEmail($email)->firstOrFail();
+        $user = User::whereEmail($email)->first();
         if (!$user) {
             return ['status_code' => 0,
                 'message' => 'login expired'
@@ -207,6 +249,15 @@ class AuthController extends Controller
 
         if ($_request->input('name')) {
             $user->name = $_request->input('name');
+        }
+
+        if ($_request->input('default_org')) {
+            // validate user organization
+            $no_access = User::validateUserOrganization($user->id, $_request->input('default_org'));
+            if ($no_access) {
+                return $no_access;
+            }
+            $user->default_org = $_request->input('default_org');
         }
 
         $user->save();

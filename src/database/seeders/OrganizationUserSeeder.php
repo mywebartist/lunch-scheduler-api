@@ -3,8 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\OrganizationUser;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Seeder;
 
 class OrganizationUserSeeder extends Seeder

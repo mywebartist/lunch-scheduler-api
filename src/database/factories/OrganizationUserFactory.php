@@ -21,7 +21,7 @@ class OrganizationUserFactory extends Factory
             'user_id' => $this->faker->numberBetween(1, 9),
 //            'role' => $this->faker->randomElement(['org_admin', 'staff', 'chef']),
 //            'roles' => json_encode( $this->faker->randomElement(['org_admin', 'staff', 'chef'])),
-                'roles' => json_encode(  ['staff'])
+            'roles' => json_encode(['staff'])
         ];
     }
 }

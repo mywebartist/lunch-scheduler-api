@@ -17,9 +17,9 @@ class MediaFactory extends Factory
     public function definition()
     {
         return [
-            'resource_id' => $this->faker->numberBetween(1,10),
-            'resource_type' => $this->faker->randomElement(['user', 'item','organization']),
-            'media_type' => $this->faker->randomElement(['picture', 'video','avatar']),
+            'resource_id' => $this->faker->numberBetween(1, 10),
+            'resource_type' => $this->faker->randomElement(['user', 'item', 'organization']),
+            'media_type' => $this->faker->randomElement(['picture', 'video', 'avatar']),
             'filename' => 'default.jpg',
         ];
     }

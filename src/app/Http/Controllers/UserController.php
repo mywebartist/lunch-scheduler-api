@@ -22,7 +22,11 @@ class UserController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return $validator->messages();
+            return [
+                'status_code' => 0,
+                'message' => $validator->messages()->first(),
+                'errors' => $validator->messages()
+            ];
         }
         return true;
 

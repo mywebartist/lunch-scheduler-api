@@ -20,12 +20,21 @@ class ItemSelectionController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return $validator->messages();
+            return [
+                'status_code' => 0,
+                'message' => $validator->messages()->first(),
+                'errors' => $validator->messages()
+            ];
         }
 
         // get user
         $email = Crypt::decrypt($_request->header('x-apikey'));
-        $user = User::whereEmail($email)->firstOrFail();
+        $user = User::whereEmail($email)->first();
+        if (!$user) {
+            return ['status_code' => 0,
+                'message' => 'login expired'
+            ];
+        }
 
         // validate user organization
         $no_access = User::validateUserOrganizationRole((int)$user->id, ((int)$_request->input('organization_id')), ['staff']);
@@ -33,16 +42,47 @@ class ItemSelectionController extends Controller
             return $no_access;
         }
 
-        $items_selected = ItemSelection::whereUserId($user->id)->whereOrganization_id($_request->input('organization_id'))->first();
-        $items = Item::findMany(json_decode($items_selected->items_ids));
+        //dd( $_request->input('organization_id')  );
+        $selected_items = ItemSelection::all()->where('user_id', $user->id)->where('organization_id', $_request->input('organization_id'));
+//            dd($selected_items);
+        if ($selected_items->count() == 0) {
+            return [
+                'status_code' => 1,
+                'message' => 'items selected by user id: ' . $user->id . ', org id: ' . $_request->input('organization_id'),
+                'selections' => [],
+            ];
+        }
+
+        $selection_dates = [];
+        $selection_days = [];
+        foreach ($selected_items as $selected_item) {
+            $date = date_create($selected_item->scheduled_at);
+            // echo date_format($date, 'Y-m-d H:i:s');
+            $selection_dates = $this->getItemsByIds(json_decode($selected_item->items_ids), $selected_item->scheduled_at);
+            foreach ($selection_dates as $selection_date){
+                $selection_days[] = $selection_date;
+            }
+        }
+
+       // $selections['selections'] = $selection_dates;
 
         $items =
             ['status_code' => 1,
-                'message' => 'items selected by user id: ' . $user->id,
-                'items' => $items->toArray(),
+                'message' => 'items selected by user id: ' . $user->id . ', org id: ' . $_request->input('organization_id'),
+                'data' => $selection_days,
             ];
         return $items;
 
+    }
+
+    public function getItemsByIds(array $_item_ids, $_date)
+    {
+        $items = Item::findMany($_item_ids);
+        foreach ($items as $item) {
+            $date = date_create($_date);
+            $item['scheduled_at'] =  date_format($date, 'Y-M-d');
+        }
+        return $items;
     }
 
     public function store(Request $_request)
@@ -56,9 +96,12 @@ class ItemSelectionController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return $validator->messages();
+            return [
+                'status_code' => 0,
+                'message' => $validator->messages()->first(),
+                'errors' => $validator->messages()
+            ];
         }
-
         // get user
         $email = Crypt::decrypt($_request->header('x-apikey'));
         $user = User::whereEmail($email)->first();

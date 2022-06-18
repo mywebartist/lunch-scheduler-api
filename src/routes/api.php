@@ -27,6 +27,8 @@ Route::get('verify/token/{token}', [\App\Http\Controllers\AuthController::class,
 // user
 Route::get('profile', [\App\Http\Controllers\AuthController::class, 'getProfile'])->middleware('logged_in');
 Route::put('profile', [\App\Http\Controllers\AuthController::class, 'updateProfile'])->middleware(['logged_in']);
+Route::get('user/orgs', [\App\Http\Controllers\OrganizationUserController::class, 'get_user_orgs'])->middleware('logged_in');
+
 //Route::resource('users', UserController::class )->except(['create', 'edit', 'store'])->middleware(['logged_in']);
 
 // items
@@ -35,8 +37,11 @@ Route::resource('items', \App\Http\Controllers\ItemController::class)->except(['
 // organization
 Route::get('org/users', [\App\Http\Controllers\OrganizationUserController::class, 'get_org_users'])->middleware('logged_in');
 Route::post('org/users', [\App\Http\Controllers\OrganizationUserController::class, 'add_org_user'])->middleware('logged_in');
+//Route::get('org/user/joins', [\App\Http\Controllers\OrganizationUserController::class, 'get_org_user_join_requests'])->middleware('logged_in');
+Route::post('org/user/admit', [\App\Http\Controllers\OrganizationUserController::class, 'admit_org_user'])->middleware('logged_in');
 Route::put('org/user/roles', [\App\Http\Controllers\OrganizationUserController::class, 'org_user_add_remove_role'])->middleware('logged_in');
-Route::resource('org', \App\Http\Controllers\OrganizationController::class)->except(['index', 'create', 'edit', 'destroy'])->middleware(['logged_in']);
+Route::post('org/join', [\App\Http\Controllers\OrganizationUserController::class, 'user_join_org'])->middleware('logged_in');
+Route::resource('orgs', \App\Http\Controllers\OrganizationController::class)->except([  'create', 'edit', 'destroy'])->middleware(['logged_in']);
 
 
 // items selection

@@ -38,7 +38,7 @@ class User extends Model
 {
     use HasFactory, Notifiable;
 
-    protected $hidden = ['email'];
+   // protected $hidden = ['email'];
 
 
     public static function validateStaff($_email, Item $_item, $_item_id)
@@ -214,7 +214,7 @@ class User extends Model
 
     public static function validateChef($email, $organization_id)
     {
-        $user = User::whereEmail($email)->firstOrFail();
+        $user = User::whereEmail($email)->first();
         $user_org = OrganizationUser::where('user_id', $user->id,)->where('organization_id', $organization_id)->first();
 
 // check user is part of that org
