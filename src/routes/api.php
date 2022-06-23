@@ -35,6 +35,7 @@ Route::get('user/orgs', [\App\Http\Controllers\OrganizationUserController::class
 Route::resource('items', \App\Http\Controllers\ItemController::class)->except(['create', 'edit'])->middleware(['logged_in']);
 
 // organization
+Route::get('org/orders', [\App\Http\Controllers\OrganizationUserController::class, 'get_org_orders'])->middleware('logged_in');
 Route::get('org/users', [\App\Http\Controllers\OrganizationUserController::class, 'get_org_users'])->middleware('logged_in');
 Route::post('org/users', [\App\Http\Controllers\OrganizationUserController::class, 'add_org_user'])->middleware('logged_in');
 //Route::get('org/user/joins', [\App\Http\Controllers\OrganizationUserController::class, 'get_org_user_join_requests'])->middleware('logged_in');
@@ -45,6 +46,7 @@ Route::resource('orgs', \App\Http\Controllers\OrganizationController::class)->ex
 
 
 // items selection
+Route::post('items-selection/choose-items', [\App\Http\Controllers\ItemSelectionController::class, 'make_items_selection'])->middleware('logged_in');
 Route::resource('items-selection', \App\Http\Controllers\ItemSelectionController::class)->except(['create', 'edit', 'update' ])->middleware(['logged_in']);
 
 //media

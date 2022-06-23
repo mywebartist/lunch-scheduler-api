@@ -128,7 +128,7 @@ class ItemSelectionController extends Controller
         } else {
             // add new item selection for this day
             $item_selection = new ItemSelection();
-            $item_selection->schedule_id = $user->id;
+//            $item_selection->schedule_id = $user->id;
             $item_selection->user_id = $user->id;
             $item_selection->organization_id = $_request->input('organization_id');
 
@@ -142,7 +142,7 @@ class ItemSelectionController extends Controller
             // remove duplicate items
             $item_selection_ids = array_unique($item_selection_ids);
 
-            $item_selection->item_id = 4; // to be deleted
+//            $item_selection->item_id = 4; // to be deleted
             $item_selection->scheduled_at = $_request->input('scheduled_at'); // to be deleted
             $item_selection->items_ids = json_encode($item_selection_ids);
             $item_selection->save();
@@ -177,6 +177,64 @@ class ItemSelectionController extends Controller
     public function show(ItemSelection $itemSelection)
     {
         //
+    }
+
+    public function make_items_selection(Request $_request)
+    {
+
+        $validator = Validator::make($_request->all(), [
+            'organization_id' => 'required|exists:organizations,id',
+            'items_ids' => 'required|JSON',
+            'scheduled_at' => 'required|date_format:Y-m-d',
+//            'add_or_remove' => 'required|in:add,remove',
+        ]);
+
+        if ($validator->fails()) {
+            return [
+                'status_code' => 0,
+                'message' => $validator->messages()->first(),
+                'errors' => $validator->messages()
+            ];
+        }
+        // get user
+        $email = Crypt::decrypt($_request->header('x-apikey'));
+        $user = User::whereEmail($email)->first();
+        if (!$user) {
+            return ['status_code' => 0,
+                'message' => 'login expired'
+            ];
+        }
+
+        // validate staff permission in organization
+        $no_access = User::validateUserOrganizationRole((int)$user->id, ((int)$_request->input('organization_id')), ['org_admin', 'chef', 'staff']);
+        if ($no_access) {
+            return $no_access;
+        }
+
+        // find an existing item selection for this day
+        $item_selection = ItemSelection:: whereUserId($user->id)->whereOrganization_id($_request->input('organization_id'))->whereScheduled_at($_request->input('scheduled_at'))->first();
+
+        // item selection exist for this day
+        if (!$item_selection) {
+            // add new item selection for this day
+            $item_selection = new ItemSelection();
+//            $item_selection->schedule_id = $user->id;
+            $item_selection->user_id = $user->id;
+            $item_selection->organization_id = $_request->input('organization_id');
+        }
+
+        // add role
+
+            $item_selection->scheduled_at = $_request->input('scheduled_at'); // to be deleted
+            $item_selection->items_ids =  $_request->input('items_ids')  ;
+            $item_selection->save();
+            return [
+                'status_code' => 1,
+                'message' => 'updated items: ' . $_request->input('items_ids') . ' for ' . $_request->input('scheduled_at') . ' for this user id: ' . $user->id . ' lol'. ', org id: ' . $_request->input('organization_id') . ' lol'
+            ];
+
+
+
     }
 
 

@@ -13,6 +13,8 @@ server {
     access_log  /var/log/nginx/domains/%domain%.bytes bytes;
     error_log   /var/log/nginx/domains/%domain%.error.log error;
 
+    charset utf-8;
+
     ssl_certificate      %ssl_pem%;
     ssl_certificate_key  %ssl_key%;
     ssl_stapling on;

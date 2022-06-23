@@ -16,7 +16,7 @@ return new class extends Migration {
             $table->id();
             $table->unsignedInteger('organization_id');
             $table->unsignedInteger('user_id');
-            $table->json('roles')->default(json_encode(['staff']));
+            $table->json('roles');
             $table->tinyInteger('status')->default(0)->comment('0 inactive, 1 active');
             $table->timestamps();
         });

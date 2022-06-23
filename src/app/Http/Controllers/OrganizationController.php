@@ -71,10 +71,25 @@ class OrganizationController extends Controller
         $email = Crypt::decrypt($_request->header('x-apikey'));
         $user = User::whereEmail($email)->first();
         if (!$user) {
-            return ['status_code' => 0,
+            return [
+                'status_code' => 0,
                 'message' => 'login expired'
             ];
         }
+
+        // get org for this user where user is org_admin
+        $user_orgs = OrganizationUser::all()->where('user_id', $user->id);
+        foreach($user_orgs as $user_org){
+            if( in_array( 'org_admin', json_decode(  $user_org->roles) )){
+                $org = Organization::whereId($user_org->organization_id)->first();
+                return [
+                    'status_code' => 0,
+                    'message' => 'you already have org id: '. $user_org->id .', name:"'. $org->name  . '", you can only have 1 org lmao'
+                ];
+            }
+        }
+
+
 
         // create org
         $org = new Organization();

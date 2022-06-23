@@ -80,7 +80,7 @@ class AuthController extends Controller
 
     }
 
-    public function login_pin(Request $_request)
+    public function login_pin(Request $_request): array
     {
         // validate email is provide
         $validator = Validator::make($_request->all(), [
@@ -95,13 +95,14 @@ class AuthController extends Controller
             ];
         }
 
-        $fromYesterday = date('Y-m-d', strtotime("-1 day"));
+        $fromYesterday = date('Y-m-d', strtotime("-90 day"));
 
         $pin = strtoupper($_request->input('pin'));
         $login_pin = LoginPin::whereDate('created_at', '>=', $fromYesterday)->wherePin($pin)->first();
 
         if (!$login_pin) {
-            return ['status_code' => 0,
+            return [
+                'status_code' => 0,
                 'message' => 'login pin expired you too slow lmao. login with pin within 1 day'
             ];
         }
@@ -110,10 +111,14 @@ class AuthController extends Controller
         $email = Crypt::decrypt($login_pin->token);
         $user = User::whereEmail($email)->first();
         if (!$user) {
-            return ['status_code' => 0,
+            return [
+                'status_code' => 0,
                 'message' => 'login expired'
             ];
         }
+
+        // remove email
+        $user->setHidden(['email']);
 
         // get users organizations
         $user_organizations = OrganizationUser::all()->where('user_id', $user->id);
@@ -124,22 +129,14 @@ class AuthController extends Controller
             $user_organizations_ids[] = $user_organization->organization_id;
         }
 
-//        if ($login_pin) {
         $token = $login_pin->token;
-        // $login_pin->delete();
+        // $login_pin->delete(); // not going to delete for now
         return [
             'x-apikey' => $token,
             'status_code' => 1,
             'message' => 'access token',
             'user' => $user
-//                'organization_ids' => $user_organizations_ids
         ];
-//        }
-
-//        return [
-//            'status_code' => 0,
-//            'message' => 'this pin is expired or used lol'
-//        ];
     }
 
     public function verifyToken($_token): array
@@ -157,15 +154,15 @@ class AuthController extends Controller
             }
 
             // activate user
-            if ($user->status == 0) {
-                $user->status = 1;
-                $user->save();
-            }
+//            if ($user->status == 0) {
+//                $user->status = 1;
+//                $user->save();
+//            }
 
             return [
                 'user' => $user,
                 'status_code' => 1,
-                'message' => $user->status == 1 ? 'user activate' : 'user not activate',
+                'message' => $user->status == 1 ? 'user login' : 'user not activate',
             ];
         }
 
@@ -182,7 +179,8 @@ class AuthController extends Controller
         $email = Crypt::decrypt($_request->header('x-apikey'));
         $user = User::whereEmail($email)->first();
         if (!$user) {
-            return ['status_code' => 0,
+            return [
+                'status_code' => 0,
                 'message' => 'login expired'
             ];
         }
@@ -212,7 +210,8 @@ class AuthController extends Controller
 //        );
 
         $user = array_merge(
-            ['status_code' => 1,
+            [
+                'status_code' => 1,
                 'message' => 'logged in user'
             ],
             $user->toArray(),
@@ -227,12 +226,20 @@ class AuthController extends Controller
     public function getUserOrgsByUserId(int $_user_id)
     {
         $user_orgs = OrganizationUser::all()->where('user_id', $_user_id);
+
         $user_org_ids = [];
         foreach ($user_orgs as $user_org) {
             $user_org_ids[] = $user_org->organization_id;
         }
-        $user_orgs = Organization::findMany($user_org_ids);
-        return $user_orgs;
+        $orgs = Organization::findMany($user_org_ids);
+
+        // add user role info in org
+        foreach ($orgs as $org) {
+            $user_org = $user_orgs->where('id', 15)->first();
+            $org['status'] = $user_org->status;
+            $org['roles'] = $user_org->roles;
+        }
+        return $orgs;
     }
 
     public function updateProfile(Request $_request)
@@ -241,7 +248,8 @@ class AuthController extends Controller
         $email = Crypt::decrypt($_request->header('x-apikey'));
         $user = User::whereEmail($email)->first();
         if (!$user) {
-            return ['status_code' => 0,
+            return [
+                'status_code' => 0,
                 'message' => 'login expired'
             ];
         }

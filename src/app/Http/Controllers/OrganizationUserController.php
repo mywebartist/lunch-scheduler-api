@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Item;
+use App\Models\ItemSelection;
 use App\Models\Organization;
 use App\Models\OrganizationUser;
 use App\Models\User;
@@ -68,7 +70,8 @@ class OrganizationUserController extends Controller
         $email = Crypt::decrypt($_request->header('x-apikey'));
         $user = User::whereEmail($email)->first();
         if (!$user) {
-            return ['status_code' => 0,
+            return [
+                'status_code' => 0,
                 'message' => 'login expired'
             ];
         }
@@ -83,21 +86,23 @@ class OrganizationUserController extends Controller
             $org_user->roles = json_encode(["staff"]);
             $org_user->save();
             $org_user = array_merge(
-                ['status_code' => 1,
+                [
+                    'status_code' => 1,
                     'message' => 'user added to org: ' . $_request->input('organization_id')
                 ],
                 $org_user->toArray());
             return $org_user;
         }
 
-        if ($org_user->status == 0) {
-            return ['status_code' => 0,
-                'message' => 'org id: '.$_request->input('organization_id') . ', your request is already pending they lazy lmao.'
-            ];
-        }
+//        if ($org_user->status == 0) {
+//            return [
+//                'status_code' => 0,
+//                'message' => 'org id: ' . $_request->input('organization_id') . ', your are already in that org lmao.'
+//            ];
+//        }
 
         return ['status_code' => 0,
-            'message' => 'org id: '.$_request->input('organization_id') .  'lmao you are already in this'
+            'message' => 'lmao you are already in org id: ' . $_request->input('organization_id')
         ];
 
 
@@ -141,12 +146,12 @@ class OrganizationUserController extends Controller
 //                'message' => 'there is no user with this email: ' .$_request->input('email'). 'what are you doing, in system lmao'
 //            ];
 //        }
-        $org_user_exist =  OrganizationUser::whereUser_id($user_target->id)->whereOrganization_id($_request->input('organization_id'))->first();
+        $org_user_exist = OrganizationUser::whereUser_id($user_target->id)->whereOrganization_id($_request->input('organization_id'))->first();
 
-        if($org_user_exist){
+        if ($org_user_exist) {
             return [
                 'status_code' => 0,
-                'message' => 'user id: '.$user_target->id.', email '. $_request->input('email') .' already in org: ' . $_request->input('organization_id')
+                'message' => 'user id: ' . $user_target->id . ', email ' . $_request->input('email') . ' already in org: ' . $_request->input('organization_id')
             ];
         }
 
@@ -159,7 +164,7 @@ class OrganizationUserController extends Controller
         $org_user = array_merge(
             [
                 'status_code' => 1,
-                'message' => 'user id: '.$user_target->id. ', email '. $_request->input('email') . ' added to org: ' . $_request->input('organization_id')
+                'message' => 'user id: ' . $user_target->id . ', email ' . $_request->input('email') . ' added to org: ' . $_request->input('organization_id')
             ],
             $org_user->toArray());
         return $org_user;
@@ -219,6 +224,107 @@ class OrganizationUserController extends Controller
         return $users;
     }
 
+    public function get_org_orders(Request $_request)
+    {
+        $validator = Validator::make($_request->all(), [
+            'organization_id' => 'required|exists:organizations,id',
+            'all_orders' => 'sometimes|bool'
+        ]);
+
+        if ($validator->fails()) {
+            return [
+                'status_code' => 0,
+                'message' => $validator->messages()->first(),
+                'errors' => $validator->messages()
+            ];
+        }
+
+        // get user
+        $email = Crypt::decrypt($_request->header('x-apikey'));
+        $user = User::whereEmail($email)->first();
+        if (!$user) {
+            return [
+                'status_code' => 0,
+                'message' => 'login expired'
+            ];
+        }
+
+        // validate chef/org_admin permission in organization
+        $no_access = User::validateUserOrganizationRole((int)$user->id, ((int)$_request->input('organization_id')), ['chef', 'org_admin']);
+        if ($no_access) {
+            return $no_access;
+        }
+
+//        if ($_request->input('status')) {
+//            $org_users = OrganizationUser::all()->where('organization_id', $_request->input('organization_id'))->where('status', $_request->input('status'));
+//            $org_users_ids = [];
+//            foreach ($org_users as $org_user) {
+//                $org_users_ids[] = $org_user->user_id;
+//            }
+//        } else {
+//            $org_users = OrganizationUser::all()->where('organization_id', $_request->input('organization_id'));
+//            $org_users_ids = [];
+//            foreach ($org_users as $org_user) {
+//                $org_users_ids[] = $org_user->user_id;
+//            }
+//        }
+
+        $fromToday = date('Y-m-d 00:00:00', strtotime("-0 day"));
+
+        if($_request->input('all_orders') == 0){
+            $orders = ItemSelection::all()->where( 'organization_id', $_request->input('organization_id') );
+        }elseif($_request->input('all_orders') == 1){
+            $orders = ItemSelection::all()->where( 'organization_id', $_request->input('organization_id'))->where('scheduled_at', '>=', $fromToday );
+        }
+        //dd($orders->count());
+        if($orders->count() == 0){
+            return [
+                'status_code' => 1,
+                'message' => 'there are no orders for this org id: ' . $_request->input('organization_id')
+            ];
+        }
+
+        $orders_ = [];
+        // attach user
+        foreach($orders as $order){
+            $user = User::whereId($order->user_id)->first();
+//            $order['user'] = $user;
+            $order['user_name'] = $user->name;
+            $order['user_ref'] = $user->name.'('.$user->id.')';
+            $items = [];
+            // attach items
+            foreach( json_decode( $order->items_ids) as $item_id){
+                $myItem = Item::whereId($item_id)->first();
+//                dd($order);
+                $myItem['scheduled_at'] = $order->scheduled_at;
+                $myItem['user_id'] = $user->id;
+                $myItem['user_name'] = $user->name;
+                $myItem['user_ref'] = $user->name.'('.$user->id.')';
+//                $items[] = $myItem;
+                $orders_[] = $myItem;
+            }
+//            $order['items'] = $items;
+
+        }
+
+        // convert orders to array
+
+        foreach ($orders as $order){
+//            $orders_[] = $order;
+        }
+
+        //dd($orders);
+        $orders = array_merge(
+            [
+                'status_code' => 1,
+                'message' => 'orders for this org',
+                'orders' => $orders_,
+            ],
+
+//            $orders->toArray()
+        );
+        return $orders;
+    }
 
     public function admit_org_user(Request $_request)
     {
