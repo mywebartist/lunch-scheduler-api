@@ -22,7 +22,7 @@ class MediaController extends Controller
             'resource_id' => 'required',
             'media_type' => 'required|in:picture,avatar,video,logo',
         ]);
-
+//        dd('sdf');
         if ($validator->fails()) {
             return [
                 'status_code' => 0,

@@ -43,6 +43,19 @@ class OrganizationController extends Controller
 //            ];
 //        }
 
+        $user_orgs = OrganizationUser::all()->where('user_id', $user->id);
+//        dd($user_orgs);
+        // add if user is part of this org
+        foreach ($orgs as $org){
+            foreach($user_orgs as $user_org){
+                if($org->id == $user_org->user_id){
+                        $org['joined'] = true;
+                        $org['roles'] =  $user_org->roles;
+                }
+            }
+
+        }
+
         $orgs = array_merge(
             ['status_code' => 1,
                 'message' => 'all the registered orgs lol'
@@ -58,6 +71,7 @@ class OrganizationController extends Controller
     {
         $validator = Validator::make($_request->all(), [
             'name' => 'required|max:255',
+            'description' => 'sometimes|max:255',
         ]);
         if ($validator->fails()) {
             return [
@@ -89,18 +103,19 @@ class OrganizationController extends Controller
             }
         }
 
-
-
         // create org
         $org = new Organization();
         $org->name = $_request->input('name');
+        if($_request->input('description')){
+            $org->description = $_request->input('description');
+        }
         $org->save();
 
         // create user_org
         $user_org = new OrganizationUser();
         $user_org->organization_id = $org->id;
         $user_org->user_id = $user->id;
-        $user_org->roles =  json_encode( ["org_admin"]) ;
+        $user_org->roles =  json_encode( ["org_admin", "chef", "staff"]) ;
         $user_org->save();
 
         return ['status_code' => 1,

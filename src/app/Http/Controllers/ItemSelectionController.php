@@ -37,7 +37,7 @@ class ItemSelectionController extends Controller
         }
 
         // validate user organization
-        $no_access = User::validateUserOrganizationRole((int)$user->id, ((int)$_request->input('organization_id')), ['staff']);
+        $no_access = User::validateUserOrganizationRole((int)$user->id, ((int)$_request->input('organization_id')), ['staff', 'org_admin']);
         if ($no_access) {
             return $no_access;
         }
@@ -62,6 +62,14 @@ class ItemSelectionController extends Controller
             foreach ($selection_dates as $selection_date){
                 $selection_days[] = $selection_date;
             }
+        }
+
+        // there are no selections
+        if(!$selection_days){
+          return  ['status_code' => 0,
+                'message' => 'there are no items selected by user id: ' . $user->id . ', org id: ' . $_request->input('organization_id'),
+               // 'data' => '[{}]',
+            ];
         }
 
        // $selections['selections'] = $selection_dates;

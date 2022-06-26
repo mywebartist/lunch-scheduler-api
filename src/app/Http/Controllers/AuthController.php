@@ -110,6 +110,7 @@ class AuthController extends Controller
         // get user
         $email = Crypt::decrypt($login_pin->token);
         $user = User::whereEmail($email)->first();
+
         if (!$user) {
             return [
                 'status_code' => 0,
@@ -118,7 +119,7 @@ class AuthController extends Controller
         }
 
         // remove email
-        $user->setHidden(['email']);
+        //$user->setHidden(['email']);
 
         // get users organizations
         $user_organizations = OrganizationUser::all()->where('user_id', $user->id);
@@ -191,6 +192,7 @@ class AuthController extends Controller
 //            $user_org_ids[] = $user_org->organization_id;
 //        }
         $user_orgs = $this->getUserOrgsByUserId($user->id);
+//        dd($user_orgs);
 //        if ($user_orgs->count() == 0) {
 //
 //            return ['status_code' => 0,
@@ -223,7 +225,7 @@ class AuthController extends Controller
         return $user;
     }
 
-    public function getUserOrgsByUserId(int $_user_id)
+    public static function getUserOrgsByUserId(int $_user_id)
     {
         $user_orgs = OrganizationUser::all()->where('user_id', $_user_id);
 
@@ -232,10 +234,11 @@ class AuthController extends Controller
             $user_org_ids[] = $user_org->organization_id;
         }
         $orgs = Organization::findMany($user_org_ids);
-
+//        dd($orgs);
         // add user role info in org
         foreach ($orgs as $org) {
-            $user_org = $user_orgs->where('id', 15)->first();
+//            $user_org = $user_orgs->where('id', $org->id)->first();
+//            dd($user_org);
             $org['status'] = $user_org->status;
             $org['roles'] = $user_org->roles;
         }
@@ -272,7 +275,7 @@ class AuthController extends Controller
 
         $user = array_merge(
             ['status_code' => 1,
-                'message' => 'logged in user'
+                'message' => 'updated user info lol'
             ],
             $user->toArray());
         return $user;

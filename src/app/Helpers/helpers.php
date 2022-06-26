@@ -9,8 +9,8 @@ if (! function_exists('generateRandomPin')) {
     // generate random login pin
     function generateRandomPin(): string
     {
-        $pin_numbers = [2,3,4,5,8];
-        $pin_letters = ['C', 'K', 'J', 'L', 'Z'];
+        $pin_numbers = [2,3,4,5];
+        $pin_letters = ['C', 'K', 'J', 'E', 'Z'];
 
         $pin_characters = array_merge($pin_numbers, $pin_letters);
         shuffle($pin_characters);

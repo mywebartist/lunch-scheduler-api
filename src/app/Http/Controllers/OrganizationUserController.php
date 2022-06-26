@@ -218,9 +218,10 @@ class OrganizationUserController extends Controller
 
         $users = array_merge(
             ['status_code' => 1,
-                'message' => 'users from this org'
+                'message' => 'users from this org',
+                'users' =>  $users->toArray()
             ],
-            $users->toArray());
+           );
         return $users;
     }
 
